@@ -1,0 +1,10 @@
+env:
+  es6: true
+  browser: true
+  node: true
+plugins:
+  - chai-friendly
+extends:
+  - eslint:recommended
+  - airbnb-base
+  - plugin:chai-friendly/recommended
