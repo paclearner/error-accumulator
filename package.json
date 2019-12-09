@@ -1,6 +1,6 @@
 {
   "name": "error-accumulator",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "An accumulator for errors and try to throw an error if the storage is not empty.",
   "main": "index.js",
   "scripts": {
@@ -17,7 +17,8 @@
     "accumulator",
     "chain",
     "error",
-    "errors",
+    "stack",
+    "trace",
     "try",
     "throw",
     "validation"

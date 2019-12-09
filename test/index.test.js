@@ -1,10 +1,10 @@
 /* eslint-env mocha */
-const expect = require('chai').expect; // eslint-disable-line prefer-destructuring
-const accumulator = require('../index');
+const { expect } = require('chai');
+const ErrorAccumulator = require('../index');
 
-describe('ErrorAcc', () => {
+describe('error-accumulator', () => {
   it('should throw no error', () => {
-    const acc = accumulator();
+    const acc = new ErrorAccumulator();
     expect(() => {
       acc
         .add(undefined)
@@ -17,7 +17,7 @@ describe('ErrorAcc', () => {
         .try()
         .add([])
         .add({})
-        .add(accumulator())
+        .add(new ErrorAccumulator())
         .try();
     }).to.not.throw();
 
@@ -33,13 +33,13 @@ describe('ErrorAcc', () => {
       }
     }
 
-    const acc1 = accumulator();
+    const acc1 = new ErrorAccumulator();
     acc1.add('previous error 1');
     acc1.add('previous error 2');
 
     const UserErrorMessageWithLineNumberTest = 'UserError test @line';
 
-    const acc2 = accumulator();
+    const acc2 = new ErrorAccumulator();
     expect(() => {
       acc2
         .add(true)
@@ -90,9 +90,27 @@ describe('ErrorAcc', () => {
     expect(errors[errors.length - 3].message).to.include(UserErrorMessageWithLineNumberTest);
   });
 
+  it('should return a error stack for nested array', () => {
+    const nestdArray = [
+      ['0-1', '0-2'],
+      [['1-0-0', '1-0-1'], [[['1-1-0-0', '1-1-0-1'], [], ['1-3-0', '1-3-1']]]],
+      ['2-0', ['2-1-0', '2-1-1']],
+    ];
+    const acc = new ErrorAccumulator();
+    acc.add(nestdArray);
+    const error = acc.error();
+
+    const fileLine = 'index[.]test[.]js:100';
+    nestdArray.flat(Infinity).forEach((item) => {
+      expect(error.stack).to
+        .match(new RegExp(`(^|\n)Error: ${item}\n[^\n]+${fileLine}`), 'gm');
+    });
+    expect(error.stack).to.not.include('index.js');
+  });
+
   it('should merge the two instaces', () => {
-    const a = accumulator();
-    const b = accumulator();
+    const a = new ErrorAccumulator();
+    const b = new ErrorAccumulator();
     a.add('A1');
     b.add('B1');
     a.add('A2');
@@ -119,7 +137,7 @@ describe('ErrorAcc', () => {
     errorWithoutBoth.message = { 'the message': 'is this' };
     delete errorWithoutBoth.stack;
 
-    const acc = accumulator();
+    const acc = new ErrorAccumulator();
     expect(() => {
       acc
         .add(errorWithoutStack)

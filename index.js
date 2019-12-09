@@ -1,86 +1,78 @@
-const stringify = (obj) => ((typeof obj === 'string') ? obj : JSON.stringify(obj));
 const isEmpty = (obj) => ((typeof obj === 'object') && (Object.keys(obj).length === 0));
-const isError = (e) => ((e.message) && (typeof e.message === 'string') && (e.stack));
-const isErrorAccmulator = (obj, Klass) => {
-  // eslint-disable-next-line no-restricted-syntax
-  for (const prop in Klass.prototype) {
-    if (!(prop in obj.constructor.prototype)) {
-      return false;
-    }
-  }
-  return true;
-};
 
 const stacktrace = (obj, inc) => {
-  const name = `Error: ${stringify(obj)}\n`;
-  const stack = new Error().stack; // eslint-disable-line prefer-destructuring
-  const trace = stack.split('\n').slice(inc + 3);
-  return name + (trace.join('\n'));
+  const trace = new Error().stack.split('\n').slice(inc + 3).join('\n');
+  const message = (typeof obj === 'string') ? obj : JSON.stringify(obj);
+  return `Error: ${message}\n${trace}`;
 };
 
-module.exports = function accmulator() {
-  const accumulator = [];
+module.exports = (() => {
+  const accumulator = Symbol('private property: accumulator');
+  const pushError = Symbol('private method: pushError');
+  const pushObject = Symbol('private method: pushObject');
 
-  const pushError = (e) => {
-    accumulator.push(e);
-  };
+  return class ErrorAccumulator {
+    constructor() {
+      this[accumulator] = [];
+    }
 
-  const pushObject = (obj, inc) => {
-    const error = new Error();
-    error.message = obj;
-    error.stack = stacktrace(obj, inc + 1);
-    pushError(error);
-  };
+    [pushError](e) {
+      this[accumulator].push(e);
+    }
 
-  function ErrorAccmulator() {}
+    [pushObject](obj, inc) {
+      const error = new Error();
+      error.message = obj;
+      error.stack = stacktrace(obj, inc + 1);
+      this[pushError](error);
+    }
 
-  ErrorAccmulator.prototype.add = function add(obj, inc = 0) {
-    if (!obj) {
+    add(obj, inc = 0) {
+      if (!obj) {
+        return this;
+      }
+      if (obj instanceof Error) {
+        this[pushError](obj);
+        return this;
+      }
+      if (obj instanceof ErrorAccumulator) {
+        obj.errors().map((e) => this[pushError](e));
+        return this;
+      }
+      if (obj instanceof Array) {
+        obj.map((o) => this.add(o, inc + 3));
+        return this;
+      }
+      if (isEmpty(obj)) {
+        return this;
+      }
+      this[pushObject](obj, inc);
       return this;
     }
-    if (isError(obj)) {
-      pushError(obj);
+
+    has() {
+      return (this[accumulator].length > 0);
+    }
+
+    try() {
+      if (this.has()) {
+        throw this.error();
+      }
       return this;
     }
-    if (isErrorAccmulator(obj, ErrorAccmulator)) {
-      obj.errors().map((e) => pushError(e));
-      return this;
-    }
-    if (obj instanceof Array) {
-      obj.map((o) => this.add(o, inc + 3));
-      return this;
-    }
-    if (isEmpty(obj)) {
-      return this;
-    }
-    pushObject(obj, inc);
-    return this;
-  };
 
-  ErrorAccmulator.prototype.has = function has() {
-    return (accumulator.length > 0);
-  };
-
-  ErrorAccmulator.prototype.try = function tryThrow() {
-    if (this.has()) {
-      throw this.error();
+    error() {
+      if (!this.has()) {
+        return null;
+      }
+      const error = new Error();
+      error.message = JSON.stringify(this[accumulator].map((e) => e.message));
+      error.stack = this[accumulator].map((e) => e.stack).join('\n');
+      return error;
     }
-    return this;
-  };
 
-  ErrorAccmulator.prototype.error = function error() {
-    if (!this.has()) {
-      return null;
+    errors() {
+      return this[accumulator].slice();
     }
-    const err = new Error();
-    err.message = JSON.stringify(accumulator.map((e) => e.message));
-    err.stack = accumulator.map((e) => e.stack).join('\n');
-    return err;
   };
-
-  ErrorAccmulator.prototype.errors = function errors() {
-    return accumulator.slice();
-  };
-
-  return new ErrorAccmulator();
-};
+})();

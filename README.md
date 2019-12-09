@@ -21,8 +21,8 @@ If the storage is empty, nothing is thrown and the return valud of `try` is the 
 ## Usage
 
 ```js
-const accumulator = require('error-accumulator');
-const acc = accumulator();
+const ErrorAccumulator = require('error-accumulator');
+const acc = new ErrorAccumulator();
 
 try {
   acc
@@ -47,7 +47,7 @@ try {
   console.log(acc.errors()); // return an array of the errors
 }
 
-const anotherAcc = accumulator();
+const anotherAcc = new ErrorAccumulator();
 anotherAcc.add(acc); // append all errors of acc to anotherAcc
 ```
 
@@ -63,9 +63,9 @@ The type of `.error()` is `Error` such that:
 ```js
 /* index.test.js */
 'use strict';
-const accumulator = require('error-accumulator');
+const ErrorAccumulator = require('error-accumulator');
 
-const acc = accumulator();
+const acc = new ErrorAccumulator();
 acc
   .add(true) // line 7.
   .add(5150)
@@ -125,12 +125,12 @@ Error: Error test
 The type of `.errors()` is a `Array`, and the element is an instance of `Error`.
 The element is quite **different** from the `Error` instance of `.error`.
 The `message` property of each `.errors()` element holds **the original input value**.
-**Note** that if the input is a `Array` or an instance of `error-accumulator`, the input will be flatten and the each element is add individually.
+**Note** that if the input for `add` is a `Array` or an instance of `ErrorAccumulator`, the input will be flatten and the each element will add to the storage individually.
 
 ```js
-const accumulator = require('error-accumulator');
+const ErrorAccumulator = require('error-accumulator');
 
-const acc = accumulator();
+const acc = new ErrorAccumulator();
 acc
   .add(true)
   .add(5150)
