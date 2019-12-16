@@ -1,7 +1,9 @@
 const isEmpty = (obj) => ((typeof obj === 'object') && (Object.keys(obj).length === 0));
 
 const stacktrace = (obj, inc) => {
-  const trace = new Error().stack.split('\n').slice(inc + 3).join('\n');
+  const e = new Error();
+  /* istanbul ignore next */
+  const trace = e.stack ? e.stack.split('\n').slice(inc + 3).join('\n') : '';
   const message = (typeof obj === 'string') ? obj : JSON.stringify(obj);
   return `Error: ${message}\n${trace}`;
 };
