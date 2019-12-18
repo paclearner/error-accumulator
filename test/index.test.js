@@ -2,6 +2,13 @@
 const { expect } = require('chai');
 const ErrorAccumulator = require('../index');
 
+const lineNumber = () => {
+  const e = new Error();
+  if (e.lineNumber) return lineNumber;
+  if (!e.stack) return NaN;
+  return parseInt(e.stack.split('index.test.js:')[2].match(/^(\d+)/)[1], 10);
+};
+
 describe('error-accumulator', () => {
   it('should throw no error', () => {
     const acc = new ErrorAccumulator();
@@ -37,7 +44,7 @@ describe('error-accumulator', () => {
     acc1.add('previous error 1');
     acc1.add('previous error 2');
 
-    const UserErrorMessageWithLineNumberTest = 'UserError test @line';
+    const UserErrorMessage = 'UserError@line';
 
     const acc2 = new ErrorAccumulator();
     expect(() => {
@@ -54,12 +61,12 @@ describe('error-accumulator', () => {
         .add(new SyntaxError('SyntaxError test'))
         .add(new TypeError('TypeError test'))
         // make the next line number as lineNumber;
-        .add(new UserError(UserErrorMessageWithLineNumberTest))
+        .add(new UserError(UserErrorMessage))
         .add(acc1)
         .try();
     }).to.throw(/Error/);
 
-    const lineNumber = 57; // is a line number of the last new UserError.
+    const lineNum = lineNumber() - 5; // The UserError was added 5 lines before
 
     const error = acc2.error();
     expect(error).to.be.an.instanceOf(Error);
@@ -76,18 +83,18 @@ describe('error-accumulator', () => {
       '"ReferenceError test",',
       '"SyntaxError test",',
       '"TypeError test",',
-      '"UserError test @line",',
+      `"${UserErrorMessage}",`,
       '"previous error 1",',
       '"previous error 2"',
       ']',
     ].join(''));
 
     expect(error.stack).to
-      .match(new RegExp(`${UserErrorMessageWithLineNumberTest}\n.+index\\.test\\.js:${lineNumber}:`))
+      .match(new RegExp(`${UserErrorMessage}\n.+index\\.test\\.js:${lineNum}:`))
       .not.include('index.js');
 
     const errors = acc2.errors();
-    expect(errors[errors.length - 3].message).to.include(UserErrorMessageWithLineNumberTest);
+    expect(errors[errors.length - 3].message).to.include(UserErrorMessage);
   });
 
   it('should return a error stack for nested array', () => {
@@ -98,9 +105,10 @@ describe('error-accumulator', () => {
     ];
     const acc = new ErrorAccumulator();
     acc.add(nestdArray);
+    const lineNum = lineNumber() - 1; // The errors was added one line before
     const error = acc.error();
 
-    const fileLine = 'index[.]test[.]js:100';
+    const fileLine = `index[.]test[.]js:${lineNum}`;
     nestdArray.flat(Infinity).forEach((item) => {
       expect(error.stack).to
         .match(new RegExp(`(^|\n)Error: ${item}\n[^\n]+${fileLine}`), 'gm');
