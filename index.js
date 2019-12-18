@@ -1,17 +1,45 @@
 const {
   isArray,
+  isBlob,
+  isDate,
+  // isFile,
+  isFunction,
   isPlainObject,
-  isString,
+  isRegExp,
+  isSymbol,
 } = require('is-what');
 
 const isEmpty = (obj) => (isPlainObject(obj) && (Object.keys(obj).length === 0));
 
-const stacktrace = (obj, inc) => {
+const message = (obj) => {
+  if (isFunction(obj)) {
+    return `function: ${obj.toString()}`;
+  }
+  if (isDate(obj)) {
+    return `Date: ${obj}`;
+  }
+  if (isRegExp(obj)) {
+    return `RegExp: /${obj.source}/`;
+  }
+  if (isSymbol(obj)) {
+    return `Symbol: ${obj.toString()}`;
+  }
+  if (isBlob(obj)) {
+    return `Blob: ${obj.type}`;
+  }
+  /* not supported
+  if (isFile(obj)) {
+    return `File: ${obj.name}`;
+  }
+  */
+  return `${typeof obj}: ${JSON.stringify(obj)}`;
+};
+
+const stacktrace = (msg, inc) => {
   const e = new Error();
   /* istanbul ignore next */
-  const trace = e.stack ? e.stack.split('\n').slice(inc + 3).join('\n') : '';
-  const message = isString(obj) ? obj : JSON.stringify(obj);
-  return `Error: ${message}\n${trace}`;
+  const trace = e.stack ? `\n${e.stack.split('\n').slice(inc + 3).join('\n')}` : '';
+  return `Error: ${msg}${trace}`;
 };
 
 module.exports = (() => {
@@ -30,8 +58,8 @@ module.exports = (() => {
 
     [pushObject](obj, inc) {
       const error = new Error();
-      error.message = obj;
-      error.stack = stacktrace(obj, inc + 1);
+      error.message = message(obj);
+      error.stack = stacktrace(error.message, inc + 1);
       this[pushError](error);
     }
 

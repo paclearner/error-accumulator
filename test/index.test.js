@@ -1,5 +1,7 @@
 /* eslint-env mocha */
 const { expect } = require('chai');
+const Blob = require('node-blob');
+
 const ErrorAccumulator = require('../index');
 
 const lineNumber = () => {
@@ -41,26 +43,32 @@ describe('error-accumulator', () => {
     }
 
     const acc1 = new ErrorAccumulator();
-    acc1.add('previous error 1');
-    acc1.add('previous error 2');
+    acc1.add(new Error('PreviousError0'));
+    acc1.add(new Error('PreviousError1'));
 
     const UserErrorMessage = 'UserError@line';
 
     const acc2 = new ErrorAccumulator();
+    const date = new Date();
     expect(() => {
       acc2
         .add(true)
         .add(5150)
         .add('string test')
         .add(['array0', 'array1'])
-        .add({ objectKey: 'objectVal' })
-        .add(new Error('Error test'))
-        .add(new EvalError('EvalError test'))
-        .add(new RangeError('RangeError test'))
-        .add(new ReferenceError('ReferenceError test'))
-        .add(new SyntaxError('SyntaxError test'))
-        .add(new TypeError('TypeError test'))
-        // make the next line number as lineNumber;
+        .add({ prop: 'val' })
+        .add(function errorFunc() {}) // eslint-disable-line prefer-arrow-callback
+        .add(() => {})
+        .add(/abc/)
+        .add(Symbol()) // eslint-disable-line symbol-description
+        .add(new Blob('blb', { type: 'blob/error' }))
+        .add(date)
+        .add(new Error('ErrorTest'))
+        .add(new EvalError('EvalErrorTest'))
+        .add(new RangeError('RangeErrorTest'))
+        .add(new ReferenceError('ReferenceErrorTest'))
+        .add(new SyntaxError('SyntaxErrorTest'))
+        .add(new TypeError('TypeErrorTest'))
         .add(new UserError(UserErrorMessage))
         .add(acc1)
         .try();
@@ -70,24 +78,30 @@ describe('error-accumulator', () => {
 
     const error = acc2.error();
     expect(error).to.be.an.instanceOf(Error);
-    expect(error.message).to.equal([
-      '[',
-      'true,',
-      '5150,',
-      '"string test",',
-      '"array0","array1",',
-      '{"objectKey":"objectVal"},',
-      '"Error test",',
-      '"EvalError test",',
-      '"RangeError test",',
-      '"ReferenceError test",',
-      '"SyntaxError test",',
-      '"TypeError test",',
-      `"${UserErrorMessage}",`,
-      '"previous error 1",',
-      '"previous error 2"',
-      ']',
-    ].join(''));
+    expect(error.message).to.equal(JSON.stringify(
+      [
+        'boolean: true',
+        'number: 5150',
+        'string: "string test"',
+        'string: "array0"', 'string: "array1"',
+        'object: {"prop":"val"}',
+        'function: function errorFunc() {}',
+        'function: () => {}',
+        'RegExp: /abc/',
+        'Symbol: Symbol()',
+        'Blob: blob/error',
+        `Date: ${date}`,
+        'ErrorTest',
+        'EvalErrorTest',
+        'RangeErrorTest',
+        'ReferenceErrorTest',
+        'SyntaxErrorTest',
+        'TypeErrorTest',
+        `${UserErrorMessage}`,
+        'PreviousError0',
+        'PreviousError1',
+      ],
+    ));
 
     expect(error.stack).to
       .match(new RegExp(`${UserErrorMessage}\n.+index\\.test\\.js:${lineNum}:`))
@@ -97,21 +111,30 @@ describe('error-accumulator', () => {
     expect(errors[errors.length - 3].message).to.include(UserErrorMessage);
   });
 
-  it('should return a error stack for nested array', () => {
-    const nestdArray = [
-      ['0-1', '0-2'],
-      [['1-0-0', '1-0-1'], [[['1-1-0-0', '1-1-0-1'], [], ['1-3-0', '1-3-1']]]],
-      ['2-0', ['2-1-0', '2-1-1']],
+  it('should return a error stack for nested error array', () => {
+    const nestdErrorArray = [
+      [new Error('0-1'), new Error('0-2')],
+      [
+        [new Error('1-0-0'), new Error('1-0-1')],
+        [
+          [
+            [new Error('1-1-0-0'), new Error('1-1-0-1')],
+            [],
+          ],
+          [new Error('1-3-0'), new Error('1-3-1')],
+        ],
+      ],
+      [
+        new Error('2-0'),
+        [new Error('2-1-0'), new Error('2-1-1')],
+      ],
     ];
     const acc = new ErrorAccumulator();
-    acc.add(nestdArray);
-    const lineNum = lineNumber() - 1; // The errors was added one line before
+    acc.add(nestdErrorArray);
     const error = acc.error();
-
-    const fileLine = `index[.]test[.]js:${lineNum}`;
-    nestdArray.flat(Infinity).forEach((item) => {
+    nestdErrorArray.flat(Infinity).forEach((item) => {
       expect(error.stack).to
-        .match(new RegExp(`(^|\n)Error: ${item}\n[^\n]+${fileLine}`), 'gm');
+        .match(new RegExp(`(^|\n)${item}\n[^\n]+index[.]test[.]js`), 'gm');
     });
     expect(error.stack).to.not.include('index.js');
   });
@@ -119,10 +142,10 @@ describe('error-accumulator', () => {
   it('should merge the two instaces', () => {
     const a = new ErrorAccumulator();
     const b = new ErrorAccumulator();
-    a.add('A1');
-    b.add('B1');
-    a.add('A2');
-    b.add('B2');
+    a.add(new Error('A1'));
+    b.add(new Error('B1'));
+    a.add(new Error('A2'));
+    b.add(new Error('B2'));
     a.add(b);
 
     const errors = a.errors();
@@ -133,40 +156,39 @@ describe('error-accumulator', () => {
   });
 
   it('should throw an error with broken errors', () => {
-    const errorWithoutStack = new Error();
-    const errorWithoutStringMessage = new Error();
-    const errorWithoutBoth = new Error();
-
-    errorWithoutStack.message = 'without stack';
+    const errorWithoutStack = new Error('WithoutStack');
     delete errorWithoutStack.stack;
 
-    errorWithoutStringMessage.message = { this: 'is a message' };
+    const errorWithoutStringMessage = new Error();
+    errorWithoutStringMessage.message = { propA: 'WithoutStringMessage' };
 
-    errorWithoutBoth.message = { 'the message': 'is this' };
+    const errorWithoutBoth = new Error();
     delete errorWithoutBoth.stack;
+    errorWithoutBoth.message = { propB: 'WithoutBoth' };
+
 
     const acc = new ErrorAccumulator();
     expect(() => {
       acc
         .add(errorWithoutStack)
         .try();
-    }).to.throw(/without stack/);
+    }).to.throw(/WithoutStack/);
     expect(() => {
       acc
         .add(errorWithoutStringMessage)
         .try();
-    }).to.throw(/is a message/);
+    }).to.throw(/WithoutStringMessage/);
     expect(() => {
       acc
         .add(errorWithoutBoth)
         .try();
-    }).to.throw(/is this/);
+    }).to.throw(/WithoutBoth/);
 
-    acc.add(acc);
+    acc.add(acc); // add itself
     expect(acc.errors().length).to.eql(6);
     expect(() => {
       acc
         .try();
-    }).to.throw(/without stack.*is a message.*is this.*without stack.*is a message.*is this/);
+    }).to.throw(/WithoutStack.*propA.*WithoutStringMessage.*propB.*WithoutBoth/);
   });
 });
