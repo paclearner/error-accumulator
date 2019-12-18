@@ -46,6 +46,7 @@ module.exports = (() => {
   const accumulator = Symbol('private property: accumulator');
   const pushError = Symbol('private method: pushError');
   const pushObject = Symbol('private method: pushObject');
+  const privateAdd = Symbol('private method: privateAdd');
 
   return class ErrorAccumulator {
     constructor() {
@@ -63,7 +64,7 @@ module.exports = (() => {
       this[pushError](error);
     }
 
-    add(obj, inc = 0) {
+    [privateAdd](obj, inc) {
       if (!obj) {
         return this;
       }
@@ -76,7 +77,7 @@ module.exports = (() => {
         return this;
       }
       if (isArray(obj)) {
-        obj.map((o) => this.add(o, inc + 3));
+        obj.map((o) => this[privateAdd](o, inc + 3));
         return this;
       }
       if (isEmpty(obj)) {
@@ -84,6 +85,10 @@ module.exports = (() => {
       }
       this[pushObject](obj, inc);
       return this;
+    }
+
+    add(obj) {
+      return this[privateAdd](obj, 1);
     }
 
     has() {
