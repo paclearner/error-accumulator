@@ -1,10 +1,16 @@
-const isEmpty = (obj) => ((typeof obj === 'object') && (Object.keys(obj).length === 0));
+const {
+  isArray,
+  isPlainObject,
+  isString,
+} = require('is-what');
+
+const isEmpty = (obj) => (isPlainObject(obj) && (Object.keys(obj).length === 0));
 
 const stacktrace = (obj, inc) => {
   const e = new Error();
   /* istanbul ignore next */
   const trace = e.stack ? e.stack.split('\n').slice(inc + 3).join('\n') : '';
-  const message = (typeof obj === 'string') ? obj : JSON.stringify(obj);
+  const message = isString(obj) ? obj : JSON.stringify(obj);
   return `Error: ${message}\n${trace}`;
 };
 
@@ -41,7 +47,7 @@ module.exports = (() => {
         obj.errors().map((e) => this[pushError](e));
         return this;
       }
-      if (obj instanceof Array) {
+      if (isArray(obj)) {
         obj.map((o) => this.add(o, inc + 3));
         return this;
       }
