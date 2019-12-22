@@ -4,12 +4,18 @@ const {
   isDate,
   // isFile,
   isFunction,
+  // isNull,
+  // isNumber,
   isPlainObject,
+  // isPrimitive,
   isRegExp,
   isSymbol,
+  // isUndefined,
 } = require('is-what');
 
-const isEmpty = (obj) => (isPlainObject(obj) && (Object.keys(obj).length === 0));
+const isEmptyObject = (obj) => (isPlainObject(obj) && (Object.keys(obj).length === 0));
+
+// const isNumberNaN = (obj) => (isNumber(obj) && Number.isNaN(obj));
 
 const message = (obj) => {
   if (isFunction(obj)) {
@@ -80,7 +86,7 @@ module.exports = (() => {
         obj.map((o) => this[privateAdd](o, inc + 3));
         return this;
       }
-      if (isEmpty(obj)) {
+      if (isEmptyObject(obj)) {
         return this;
       }
       this[pushObject](obj, inc);
@@ -89,6 +95,17 @@ module.exports = (() => {
 
     add(obj) {
       return this[privateAdd](obj, 1);
+    }
+
+    err(obj) {
+      if (obj instanceof Error) {
+        this[pushError](obj);
+      }
+      if (obj instanceof ErrorAccumulator) {
+        obj.errors().map((e) => this.err(e));
+        return this;
+      }
+      return this;
     }
 
     has() {
