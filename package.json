@@ -1,7 +1,7 @@
 {
   "name": "error-accumulator",
-  "version": "0.0.3",
-  "description": "An accumulator for errors and try to throw an error if the storage is not empty.",
+  "version": "0.1.0",
+  "description": "An accumulator for only errors that tries to interrupt and throw an error if the storage is not empty.",
   "main": "index.js",
   "scripts": {
     "lint": "eslint --fix index.js test/",
@@ -13,9 +13,7 @@
     "url": "git+https://github.com/paclearner/error-accumulator.git"
   },
   "keywords": [
-    "acc",
     "accumulator",
-    "chain",
     "error",
     "stack",
     "trace",
@@ -29,9 +27,7 @@
     "url": "https://github.com/paclearner/error-accumulator/issues"
   },
   "homepage": "https://github.com/paclearner/error-accumulator#readme",
-  "dependencies": {
-    "is-what": "^3.4.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "chai": "^4.2.0",
     "eslint": "^6.7.2",
