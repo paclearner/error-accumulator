@@ -1,12 +1,13 @@
 # error-accumulator
 
-An accumulator for only errors that tries to interrupt and throw an error if the storage is not empty.
+An accumulator for only Error instances that tries to interrupt and throws an error if and only if the accumulator is not empty.
 
-An instance of `Error` or this accumulator can be add to this accumulator but any other object can not be.
+This accumulator can accumulate an instance of `Error` or accumulator itself but not any other object or value.
 Therefore, the accumulator works well with [Short-circuit evaluation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Logical_Operators#Short-circuit_evaluation).
 
 This module provides the class `ErrorAccumulator` which has an internal array.
-And the method `add` push an input object to the array if the input is a instance of `Error` or `ErrorAccmulator`.
+The method `add` pushes an input to the array if the input is an instance of `Error` or `ErrorAccmulator`.
+If not, `add` ignores the input.
 The return value of `add` is always `ErrrorAccmulator` itself.
 The method `try` will throw an `Error` if the internal array is **NOT** empty.
 If the array is empty, `try` returns `ErrorAccmulator` itself.
@@ -77,7 +78,7 @@ console.log(acc.errors());
 //   UserError('Cannot read property \'c\'')
 // ]
 
-// add another accumulator to the accumulator:
+// add another accumulator to an accumulator:
 const empty = new ErrorAccumulator();
 const another = (new ErrorAccumulator())
   .add(new Error('0'))
@@ -93,15 +94,16 @@ console.log(acc.error().message);
 
 ## Methods
 
-### `.add(object)`
+### `.add(any)`
 
-The `add()` method always return the accumulator instance.
-If an input object is an instance of
+returns the accumulator instance itself.
+If the input is an instance of
 
 * `Error` or
 * `ErrorAccumulator`,
 
-`add()` pushes the object to the internal array.
+`add()` pushes the input to the internal array.
+If not, `add` ignores the input.
 
 ```js
 class UserError extends Error {
@@ -129,7 +131,7 @@ try {
 }
 ```
 
-If a type of an input is `ErrorAccmulator`, `add()` flats the all the errors of the input and push all the elements to the internal array individually.
+If the type of the input is `ErrorAccmulator`, `add()` flats the all the errors of the input and push all the elements to the internal array individually.
 
 ```js
 const a = new ErrorAccumulator();
@@ -146,9 +148,9 @@ console.error(a.error().message);
 
 ### `.try()`
 
-The `try()` method attempts to throw an error.
-If the internal array is **NOT** empty, `try()` throws an error which ErrorAccumulator creates (See `.error()`).
-If the internal array is empty, `try()` returns the accumulator instance.
+attempts to throw an error.
+If the internal array is **NOT** empty, `try()` throws an error which `ErrorAccumulator` creates (See `.error()`).
+If the internal array is empty, `try()` returns the accumulator instance itself.
 
 ```js
 const acc = new ErrorAccumulator();
@@ -188,14 +190,14 @@ console.log(acc.errors()); // []
 
 ### `.has()`
 
-The method `has()` returns a boolean indicating whether the internal array is empty or not.
+returns a boolean value indicating whether the internal array is empty or not.
 
 ### `.error()`
 
-The method `error()` returns an `Error` instance if the internal array is not empty.
+returns an `Error` instance if the internal array is not empty.
 If the internal array is empty, `error()` returns `null`.
 
-An instance  which `error()` returns has the standard properties of `Error` such that:
+An `Error` instance which `error()` returns has the standard properties of [Error](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) such that:
 
 * `.name`: a string indicating an array of all the error names by `JSON.stringify`.
 * `.message`: a string indicating an array of all the error messages by `JSON.stringify`.
@@ -203,9 +205,9 @@ An instance  which `error()` returns has the standard properties of `Error` such
 
 ### `.errors()`
 
-The method `errors()` return an array of all the inputs pushed by `add()`.
+returns an array of all the inputs pushed by `add()`.
 Note that if an instance of `ErrorAccumulator` has been added, the elements of the instance is flatten.
-If the internal array is empty, `errors()` returns a empty array `[]`.
+If the internal array is empty, `errors()` returns an empty array `[]`.
 
 ```js
 const a = new ErrorAccumulator();
