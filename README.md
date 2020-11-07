@@ -3,7 +3,7 @@
 An accumulator for only Error instances that tries to interrupt and throws an error if and only if the accumulator is not empty.
 
 This accumulator can accumulate an instance of `Error` or accumulator itself but not any other object or value.
-Therefore, the accumulator works well with [Short-circuit evaluation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Logical_Operators#Short-circuit_evaluation).
+Therefore, the accumulator works well with [Short-circuit evaluation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Expressions_and_Operators#Short-Circuit_Evaluation).
 
 This module provides the class `ErrorAccumulator` which has an internal array.
 The method `add` pushes an input to the array if the input is an instance of `Error` or `ErrorAccmulator`.
