@@ -1,5 +1,3 @@
-/* eslint-env mocha */
-const { expect } = require('chai');
 const Blob = require('node-blob');
 
 const ErrorAccumulator = require('../index');
@@ -15,7 +13,7 @@ describe('error-accumulator', () => {
   const a = { b: {} };
 
   describe('README', () => {
-    it('example', () => {
+    test('example', () => {
       const acc = new ErrorAccumulator();
       expect(() => {
         /* eslint-disable quotes */
@@ -37,7 +35,7 @@ describe('error-accumulator', () => {
           .try(); // throw an error
         /* eslint-enable no-multi-spaces */
         /* eslint-enable quotes */
-      }).to.throw(JSON.stringify(
+      }).toThrow(new Error(JSON.stringify(
         [
           'false',
           'null or undefined',
@@ -45,8 +43,8 @@ describe('error-accumulator', () => {
           'empty',
           'Cannot read property \'c\'',
         ],
-      ));
-      expect(acc.error().name).to.equal(JSON.stringify(
+      )));
+      expect(acc.error().name).toEqual(JSON.stringify(
         [
           'Error',
           'TypeError',
@@ -56,14 +54,14 @@ describe('error-accumulator', () => {
         ],
       ));
       const errors = acc.errors();
-      expect(errors[0]).to.instanceOf(Error);
-      expect(errors[1]).to.instanceOf(TypeError);
-      expect(errors[2]).to.instanceOf(EvalError);
-      expect(errors[3]).to.instanceOf(SyntaxError);
-      expect(errors[4]).to.instanceOf(UserError);
+      expect(errors[0]).toBeInstanceOf(Error);
+      expect(errors[1]).toBeInstanceOf(TypeError);
+      expect(errors[2]).toBeInstanceOf(EvalError);
+      expect(errors[3]).toBeInstanceOf(SyntaxError);
+      expect(errors[4]).toBeInstanceOf(UserError);
     });
 
-    it('methods', () => {
+    test('methods', () => {
       const x = new ErrorAccumulator();
       x.add(new Error('built-in Error'));
       x.add(new EvalError('built-in EvalError'));
@@ -73,10 +71,10 @@ describe('error-accumulator', () => {
       y.add(new ReferenceError('built-in ReferenceError'));
 
       const errors = x.add(y).errors();
-      expect(errors[0] instanceof Error).to.true; // true
-      expect(errors[1] instanceof EvalError).to.true; // true
-      expect(errors[2] instanceof RangeError).to.true; // true
-      expect(errors[3] instanceof ReferenceError).to.true; // true
+      expect(errors[0]).toBeInstanceOf(Error);
+      expect(errors[1]).toBeInstanceOf(EvalError);
+      expect(errors[2]).toBeInstanceOf(RangeError); // true
+      expect(errors[3]).toBeInstanceOf(ReferenceError); // true
 
       expect((new ErrorAccumulator())
         .add(new Error())
@@ -86,12 +84,12 @@ describe('error-accumulator', () => {
         .add(new SyntaxError())
         .add(new TypeError())
         .add(new UserError())
-        .errors().length).to.equal(7);
+        .errors().length).toEqual(7);
     });
   });
 
   describe('add', () => {
-    it('should not throw an exception', () => {
+    test('should not throw an exception', () => {
       const acc = new ErrorAccumulator();
       expect(() => {
         acc
@@ -119,13 +117,13 @@ describe('error-accumulator', () => {
           .add(new Blob('blb', { type: 'blob/error' }))
           .add(new Date())
           .try();
-      }).to.not.throw();
+      }).not.toThrow();
 
-      expect(acc.error()).to.be.null;
-      expect(acc.errors()).to.deep.equal([]);
+      expect(acc.error()).toBeNull();
+      expect(acc.errors()).toEqual([]);
     });
 
-    it('should throw built-in errors', () => {
+    test('should throw built-in errors', () => {
       expect(() => {
         (new ErrorAccumulator())
           .add(new Error('built-in Error'))
@@ -136,7 +134,7 @@ describe('error-accumulator', () => {
           .add(new TypeError('built-in TypeError'))
           .add(new UserError('built-in UserError'))
           .try();
-      }).to.throw(JSON.stringify(
+      }).toThrow(new Error(JSON.stringify(
         [
           'built-in Error',
           'built-in EvalError',
@@ -146,12 +144,12 @@ describe('error-accumulator', () => {
           'built-in TypeError',
           'built-in UserError',
         ],
-      ));
+      )));
     });
   });
 
   describe('error', () => {
-    it('should merge the two instaces sequentially', () => {
+    test('should merge the two instaces sequentially', () => {
       const accA = new ErrorAccumulator();
       const accB = new ErrorAccumulator();
       accA.add(new Error('A1'));
@@ -161,14 +159,14 @@ describe('error-accumulator', () => {
       accA.add(accB);
 
       expect(accA.errors().map((e) => e.name))
-        .to.deep.equal(['Error', 'Error', 'Error', 'Error']);
+        .toEqual(['Error', 'Error', 'Error', 'Error']);
       expect(accA.errors().map((e) => e.message))
-        .to.deep.equal(['A1', 'A2', 'B1', 'B2']);
+        .toEqual(['A1', 'A2', 'B1', 'B2']);
     });
 
     [
       {
-        it: 'should throw an error without name',
+        test: 'should throw an error without name',
         error: () => {
           const e = new Error('WithoutName');
           delete e.name; // but e.name is 'Error'.
@@ -181,7 +179,7 @@ describe('error-accumulator', () => {
         },
       },
       {
-        it: 'should throw an error without message',
+        test: 'should throw an error without message',
         error: () => {
           const e = new Error('WithoutMessage');
           delete e.message;
@@ -194,7 +192,7 @@ describe('error-accumulator', () => {
         },
       },
       {
-        it: 'should throw an error without stack',
+        test: 'should throw an error without stack',
         error: () => {
           const e = new Error('WithoutStack');
           delete e.stack;
@@ -207,7 +205,7 @@ describe('error-accumulator', () => {
         },
       },
       {
-        it: 'should throw an error with an object message',
+        test: 'should throw an error with an object message',
         error: () => {
           const e = new Error('WithoutStringMessage');
           e.message = { prop: 'this is not string' };
@@ -220,7 +218,7 @@ describe('error-accumulator', () => {
         },
       },
       {
-        it: 'should throw an error without stack and message',
+        test: 'should throw an error without stack and message',
         error: () => {
           const e = new Error('WithoutStackAndMessage');
           delete e.message;
@@ -235,12 +233,12 @@ describe('error-accumulator', () => {
         },
       },
     ].forEach((c) => {
-      it(c.it, () => {
+      test(`${c.test}`, () => {
         const e = (new ErrorAccumulator()).add(c.error()).error();
-        expect(e.name).to.equal('["Error"]');
-        expect(e.message).to.match(c.expected.message);
-        expect(e.stack).to.match(c.expected.stack);
-        expect(JSON.parse(e.message)).to.deep.equal(c.expected.pullback);
+        expect(e.name).toEqual('["Error"]');
+        expect(e.message).toMatch(c.expected.message);
+        expect(e.stack).toMatch(c.expected.stack);
+        expect(JSON.parse(e.message)).toEqual(c.expected.pullback);
       });
     });
   });

@@ -4,9 +4,9 @@
   "description": "An accumulator for only errors that tries to interrupt and throw an error if the storage is not empty.",
   "main": "index.js",
   "scripts": {
-    "lint": "eslint --fix index.js test/",
-    "test": "mocha",
-    "cover": "nyc npm run test"
+    "lint": "eslint --cache --ext js index.js test/",
+    "test": "npm run lint && jest",
+    "cover": "npm test -- --coverage"
   },
   "repository": {
     "type": "git",
@@ -29,13 +29,14 @@
   "homepage": "https://github.com/paclearner/error-accumulator#readme",
   "dependencies": {},
   "devDependencies": {
-    "chai": "^4.2.0",
-    "eslint": "^6.7.2",
-    "eslint-config-airbnb-base": "^14.0.0",
-    "eslint-plugin-chai-friendly": "^0.5.0",
-    "eslint-plugin-import": "^2.18.2",
-    "mocha": "^6.2.2",
-    "node-blob": "^0.0.2",
-    "nyc": "^14.1.1"
+    "eslint": "^7.13.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-jest": "^24.1.0",
+    "jest": "^26.6.3",
+    "node-blob": "^0.0.2"
+  },
+  "jest": {
+    "verbose": true
   }
 }
