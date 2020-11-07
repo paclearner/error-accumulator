@@ -1,7 +1,7 @@
 {
   "name": "error-accumulator",
   "version": "0.1.0",
-  "description": "an accumulator for only Error instances that tries to interrupt and throws an error if the accumulator is not empty.",
+  "description": "an accumulator for only Error instances that tries to interrupt and throws an error if and only if the accumulator is not empty.",
   "main": "index.js",
   "scripts": {
     "lint": "eslint --cache --ext js index.js test/",
